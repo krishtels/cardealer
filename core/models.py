@@ -1,6 +1,7 @@
 import uuid
 
 from django.contrib.auth.models import AbstractUser
+from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinValueValidator
 from django.db import models
 from django_countries.fields import CountryField
@@ -15,19 +16,25 @@ class Car(models.Model):
         Hybrid = "Hybrid"
         Electric = "Electric"
 
-    engine_t = models.CharField(
+    engine_type = models.CharField(
         choices=EngineType.choices, max_length=20, default=EngineType.Gasoline
     )
     brand = models.CharField(null=True, max_length=20)
     model = models.CharField(null=True, max_length=20)
     color = models.CharField(null=True, max_length=20)
-    engine_v = models.FloatField(validators=[MinValueValidator(0.00)], default=0.0)
+    engine_volume = models.FloatField(validators=[MinValueValidator(0.00)], default=0.0)
 
     def __str__(self):
         return f"{self.brand}-{self.model}"
 
     class Meta:
-        unique_together = ["brand", "model", "color", "engine_v"]
+        unique_together = [
+            "brand",
+            "model",
+            "color",
+            "engine_volume",
+            "engine_type",
+        ]
 
 
 class Customer(AbstractUser):
@@ -43,9 +50,9 @@ class Customer(AbstractUser):
         validators=[MinValueValidator(0.00)],
         default=0.0,
     )
-    age = models.IntegerField(null=True, validators=[MinValueValidator(0.00)])
+    age = models.IntegerField(null=True, validators=[MinValueValidator(18)])
     country = CountryField(null=True)
-    offer = models.JSONField(null=True)
+    specification = models.JSONField(encoder=DjangoJSONEncoder, null=True)
 
     def __str__(self):
         return f"{self.last_name} {self.first_name}"
@@ -72,6 +79,9 @@ class ProviderCars(BaseModel):
         default=0.0,
     )
 
+    class Meta:
+        unique_together = ("car", "provider")
+
 
 class CarShowroom(BaseModel):
     name = models.CharField(max_length=100)
@@ -83,7 +93,7 @@ class CarShowroom(BaseModel):
         default=0.0,
     )
     cars = models.ManyToManyField(Car, through="ShowroomCars")
-    specification = models.JSONField()
+    specification = models.JSONField(encoder=DjangoJSONEncoder, null=True)
 
     def __str__(self):
         return f"{self.name}"
@@ -91,7 +101,7 @@ class CarShowroom(BaseModel):
 
 class ShowroomCars(BaseModel):
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
-    shop = models.ForeignKey(CarShowroom, on_delete=models.CASCADE)
+    showroom = models.ForeignKey(CarShowroom, on_delete=models.CASCADE)
     amount = models.IntegerField(default=0)
     price = models.DecimalField(
         max_digits=12,
@@ -100,10 +110,13 @@ class ShowroomCars(BaseModel):
         default=0.0,
     )
 
+    class Meta:
+        unique_together = ("car", "showroom")
+
 
 class CarShowroomSalesHistory(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    shop = models.ForeignKey(CarShowroom, on_delete=models.CASCADE)
+    showroom = models.ForeignKey(CarShowroom, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
     price = models.DecimalField(
@@ -118,7 +131,7 @@ class CarShowroomSalesHistory(BaseModel):
 class ProviderSalesHistory(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
-    shop = models.ForeignKey(CarShowroom, on_delete=models.CASCADE)
+    showroom = models.ForeignKey(CarShowroom, on_delete=models.CASCADE)
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
     amount = models.IntegerField(default=0)
     price = models.DecimalField(
@@ -130,8 +143,7 @@ class ProviderSalesHistory(BaseModel):
 
 
 class CarShowroomDiscount(Sale):
-    shop = models.ForeignKey(CarShowroom, on_delete=models.CASCADE)
-    cars = models.ManyToManyField(Car)
+    showroom = models.ForeignKey(CarShowroom, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.name}"
@@ -139,8 +151,6 @@ class CarShowroomDiscount(Sale):
 
 class ProviderDiscount(Sale):
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
-    shops = models.ManyToManyField(CarShowroom)
-    cars = models.ManyToManyField(Car)
 
     def __str__(self):
         return f"{self.name}"
