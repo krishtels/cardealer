@@ -14,10 +14,10 @@ services:
       context: .
       dockerfile: Dockerfile
     command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/code
     ports:
       - "8000:8000"
+    volumes:
+      - .:/cardealer
     depends_on:
       - db
     env_file:

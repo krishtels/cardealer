@@ -1,8 +1,9 @@
-from core.models import Car
-from rest_framework import serializers
+from requests import Response
+from rest_framework import status
 
-# def is_car_specification_valid(json_dict):
-#     key_set = set(json_dict.keys())
-#     fields_set = {i.name for i in Car._meta.get_fields()}
-#     if not fields_set.issuperset(key_set):
-#         raise serializers.ValidationError("Json string fields are invalid")
+
+def is_valid_id(model_id):
+    if not model_id.isnumeric():
+        return Response(
+            {"error": "ID must be a number"}, status=status.HTTP_400_BAD_REQUEST
+        )
