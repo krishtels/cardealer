@@ -2,9 +2,17 @@ from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+from tools.permissions import (
+    IsCustomerAdminOrReadOnly,
+    IsProviderAdmin,
+    IsProviderAdminOrReadOnly,
+    IsShowroomAdmin,
+    IsShowroomAdminOrReadOnly,
+)
 from tools.validators import is_valid_id
 
 from core.models import (
@@ -18,6 +26,7 @@ from core.models import (
     ProviderDiscount,
     ProviderSalesHistory,
     ShowroomCars,
+    User,
 )
 from core.serializers import (
     CarSerializer,
@@ -28,6 +37,7 @@ from core.serializers import (
     ProviderDiscountSerializer,
     ProviderSalesHistorySerializer,
     ProviderSerializer,
+    UserSerializer,
 )
 
 
@@ -40,11 +50,13 @@ class BaseViewSet(ModelViewSet):
 class CarViewSet(ModelViewSet):
     queryset = Car.objects.all()
     serializer_class = CarSerializer
+    permission_classes = (IsProviderAdminOrReadOnly,)
 
 
 class CarShowroomViewSet(BaseViewSet):
     queryset = CarShowroom.objects.filter(is_active=True)
     serializer_class = CarShowroomSerializer
+    permission_classes = (IsShowroomAdminOrReadOnly,)
 
     @action(
         detail=True,
@@ -54,10 +66,12 @@ class CarShowroomViewSet(BaseViewSet):
     def add_showroom_cars(self, request, pk=None):
         showroom = self.get_object()
         car_id = request.data.get("car_id")
-        if not car_id.isnumeric():
+        if not is_valid_id(car_id):
             return Response(
-                {"error": "ID must be a number"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Id must be numeric"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
+
         car = get_object_or_404(Car, pk=car_id)
 
         amount = request.data.get("amount")
@@ -77,11 +91,13 @@ class CarShowroomViewSet(BaseViewSet):
 class CustomerViewSet(BaseViewSet):
     queryset = Customer.objects.filter(is_active=True)
     serializer_class = CustomerSerializer
+    permission_classes = (IsCustomerAdminOrReadOnly,)
 
 
 class ProviderViewSet(BaseViewSet):
     queryset = Provider.objects.filter(is_active=True)
     serializer_class = ProviderSerializer
+    permission_classes = (IsProviderAdminOrReadOnly,)
 
     @action(
         detail=True,
@@ -91,8 +107,11 @@ class ProviderViewSet(BaseViewSet):
     def add_provider_cars(self, request, pk=None):
         provider = self.get_object()
         car_id = request.data.get("car_id")
-        is_valid_id(car_id)
-
+        if not is_valid_id(car_id):
+            return Response(
+                {"error": "Id must be numeric"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         car = get_object_or_404(Car, pk=car_id)
 
         price = request.data.get("price")
@@ -109,9 +128,14 @@ class ProviderViewSet(BaseViewSet):
 class CarShowroomDiscountViewSet(BaseViewSet):
     queryset = CarShowroomDiscount.objects.filter(is_active=True)
     serializer_class = CarShowroomDiscountSerializer
+    permission_classes = (
+        IsShowroomAdminOrReadOnly,
+    )
 
 
 class ProviderDiscountListView(APIView):
+    permission_classes = (IsProviderAdminOrReadOnly,)
+
     def get(self, request):
         discount = ProviderDiscount.objects.filter(is_active=True)
         serializer = ProviderDiscountSerializer(instance=discount, many=True)
@@ -125,6 +149,8 @@ class ProviderDiscountListView(APIView):
 
 
 class ProviderDiscountDetailView(APIView):
+    permission_classes = (IsProviderAdminOrReadOnly,)
+
     def get(self, request, pk):
         discount = get_object_or_404(ProviderDiscount, pk=pk, is_active=True)
         serializer = ProviderDiscountSerializer(instance=discount)
@@ -149,8 +175,16 @@ class ProviderDiscountDetailView(APIView):
 class CarShowroomSalesHistoryViewSet(BaseViewSet):
     queryset = CarShowroomSalesHistory.objects.filter(is_active=True)
     serializer_class = CarShowroomSalesHistorySerializer
+    permission_classes = (IsShowroomAdmin,)
 
 
 class ProviderSalesHistoryViewSet(BaseViewSet):
     queryset = ProviderSalesHistory.objects.filter(is_active=True)
     serializer_class = ProviderSalesHistorySerializer
+    permission_classes = (IsProviderAdmin,)
+
+
+class UserViewSet(ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)

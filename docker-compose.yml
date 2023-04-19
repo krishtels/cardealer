@@ -9,6 +9,7 @@ services:
       - postgres_data:/var/lib/postgresql/dev_data
     ports:
       - 5431:5432
+
   web:
     build:
       context: .
