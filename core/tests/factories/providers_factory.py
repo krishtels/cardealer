@@ -1,3 +1,4 @@
+import random
 from typing import List
 
 import factory
@@ -16,7 +17,14 @@ class ProviderFactory(DjangoModelFactory):
         provider = Provider.objects.create(user=user, **kwargs)
 
         if cars:
-            [ProviderCars.objects.create(car=car, provider=provider) for car in cars]
+            [
+                ProviderCars.objects.create(
+                    car=car,
+                    provider=provider,
+                    price=round(random.uniform(1, 10), 2),
+                )
+                for car in cars
+            ]
         return provider
 
     class Meta:

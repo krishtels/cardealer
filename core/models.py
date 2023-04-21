@@ -11,10 +11,10 @@ from tools.models import BaseModel, Discount
 
 class User(AbstractUser):
     class Profile(models.TextChoices):
-        NONE = 'none'
-        CUSTOMER = 'customer'
-        SHOWROOM = 'showroom'
-        PROVIDER = 'provider'
+        NONE = "none"
+        CUSTOMER = "customer"
+        SHOWROOM = "showroom"
+        PROVIDER = "provider"
 
     user_type = models.CharField(
         choices=Profile.choices, max_length=8, default=Profile.NONE
@@ -95,6 +95,19 @@ class ProviderCars(BaseModel):
         validators=[MinValueValidator(0.00)],
         default=0.0,
     )
+    price_with_discount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(0.00)],
+        null=True,
+    )
+
+    def save(self, percent=None, *args, **kwargs):
+        if percent:
+            self.price_with_discount = self.price * (100 - percent) / 100
+        else:
+            self.price_with_discount = self.price
+        super().save(*args, **kwargs)
 
     class Meta:
         unique_together = ("car", "provider")
@@ -127,6 +140,19 @@ class ShowroomCars(BaseModel):
         validators=[MinValueValidator(0.00)],
         default=0.0,
     )
+    price_with_discount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(0.00)],
+        null=True,
+    )
+
+    def save(self, percent=None, *args, **kwargs):
+        if percent:
+            self.price_with_discount = self.price * (100 - percent) / 100
+        else:
+            self.price_with_discount = self.price
+        super().save(*args, **kwargs)
 
     class Meta:
         unique_together = ("car", "showroom")

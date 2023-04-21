@@ -1,3 +1,5 @@
+import random
+
 import factory
 from core.models import CarShowroom, CarShowroomSalesHistory, ShowroomCars
 from core.tests.randomize_value import get_random_specification
@@ -16,7 +18,11 @@ class CarShowroomFactory(DjangoModelFactory):
         showroom = CarShowroom.objects.create(user=user, **kwargs)
         if cars:
             for car in cars:
-                ShowroomCars.objects.create(car=car, showroom=showroom)
+                ShowroomCars.objects.create(
+                    car=car,
+                    showroom=showroom,
+                    price=round(random.uniform(1, 10), 2),
+                )
         return showroom
 
     class Meta:

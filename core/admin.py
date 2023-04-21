@@ -11,6 +11,7 @@ from .models import (
     ProviderDiscount,
     ProviderSalesHistory,
     ShowroomCars,
+    User,
 )
 
 Models = (
@@ -24,6 +25,7 @@ Models = (
     ProviderDiscount,
     ProviderSalesHistory,
     ShowroomCars,
+    User,
 )
 
 
