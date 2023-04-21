@@ -2,7 +2,7 @@ from datetime import date
 
 from django.core.validators import MinValueValidator
 from django_countries.serializer_fields import CountryField
-from rest_framework import permissions, serializers
+from rest_framework import serializers
 
 from core.models import (
     Car,
@@ -11,10 +11,24 @@ from core.models import (
     CarShowroomSalesHistory,
     Customer,
     Provider,
-    ProviderCars,
     ProviderDiscount,
     ProviderSalesHistory,
+    User,
 )
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "user_type",
+            "date_joined",
+        )
 
 
 class CarSerializer(serializers.ModelSerializer):
@@ -43,6 +57,7 @@ class CarShowroomSerializer(serializers.ModelSerializer):
     specification = SpecificationSerializer(many=True, required=False)
     car_amount = serializers.SerializerMethodField()
     car_price = serializers.SerializerMethodField()
+    country = CountryField(required=False)
 
     def get_car_amount(self, obj):
         showroom_cars = obj.showroomcars_set.all()
@@ -63,6 +78,7 @@ class CarShowroomSerializer(serializers.ModelSerializer):
             "cars",
             "car_amount",
             "car_price",
+            "user",
         ]
         read_only_fields = [
             "balance",
@@ -80,14 +96,11 @@ class CustomerSerializer(serializers.ModelSerializer):
             "id",
             "country",
             "specification",
-            "username",
-            "first_name",
-            "last_name",
-            "email",
             "sex",
             "phone_number",
             "balance",
             "age",
+            "user",
         ]
         read_only_fields = ["balance"]
 
@@ -110,6 +123,7 @@ class ProviderSerializer(serializers.ModelSerializer):
             "cars",
             "country",
             "car_price",
+            "user",
         ]
         read_only_fields = [
             "unique_customers_amount",

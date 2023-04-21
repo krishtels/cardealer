@@ -14,7 +14,7 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Sale(BaseModel):
+class Discount(BaseModel):
     name = models.CharField(max_length=100)
     description = models.TextField(null=True)
     amount_to_get_sale = models.IntegerField(default=0)

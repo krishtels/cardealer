@@ -6,7 +6,22 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
-from tools.models import BaseModel, Sale
+from tools.models import BaseModel, Discount
+
+
+class User(AbstractUser):
+    class Profile(models.TextChoices):
+        NONE = 'none'
+        CUSTOMER = 'customer'
+        SHOWROOM = 'showroom'
+        PROVIDER = 'provider'
+
+    user_type = models.CharField(
+        choices=Profile.choices, max_length=8, default=Profile.NONE
+    )
+
+    def __str__(self):
+        return self.username
 
 
 class Car(models.Model):
@@ -37,7 +52,7 @@ class Car(models.Model):
         ]
 
 
-class Customer(AbstractUser):
+class Customer(BaseModel):
     class Gender(models.TextChoices):
         M = "Male"
         F = "Female"
@@ -53,9 +68,10 @@ class Customer(AbstractUser):
     age = models.IntegerField(null=True, validators=[MinValueValidator(18)])
     country = CountryField(null=True)
     specification = models.JSONField(encoder=DjangoJSONEncoder, null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.last_name} {self.first_name}"
+        return f"{self.user.last_name} {self.user.first_name}"
 
 
 class Provider(BaseModel):
@@ -64,6 +80,7 @@ class Provider(BaseModel):
     unique_customers_amount = models.IntegerField(default=0)
     cars = models.ManyToManyField(Car, through="ProviderCars")
     country = CountryField(null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.name}"
@@ -94,6 +111,7 @@ class CarShowroom(BaseModel):
     )
     cars = models.ManyToManyField(Car, through="ShowroomCars")
     specification = models.JSONField(encoder=DjangoJSONEncoder, null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.name}"
@@ -142,14 +160,14 @@ class ProviderSalesHistory(BaseModel):
     )
 
 
-class CarShowroomDiscount(Sale):
+class CarShowroomDiscount(Discount):
     showroom = models.ForeignKey(CarShowroom, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.name}"
 
 
-class ProviderDiscount(Sale):
+class ProviderDiscount(Discount):
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
 
     def __str__(self):

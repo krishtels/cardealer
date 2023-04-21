@@ -10,7 +10,7 @@ from core.views import (
     ProviderDiscountDetailView,
     ProviderDiscountListView,
     ProviderSalesHistoryViewSet,
-    ProviderViewSet,
+    ProviderViewSet, UserViewSet,
 )
 
 router = routers.DefaultRouter()
@@ -21,7 +21,7 @@ router.register("providers", ProviderViewSet)
 router.register("showroomdiscounts", CarShowroomDiscountViewSet)
 router.register("showroomsaleshistory", CarShowroomSalesHistoryViewSet)
 router.register("providersaleshistory", ProviderSalesHistoryViewSet)
-
+router.register("users", UserViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
