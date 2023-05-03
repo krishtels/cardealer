@@ -14,9 +14,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: python manage.py runserver 0.0.0.0:8000
+    command: gunicorn --bind 0.0.0.0:8000 app.wsgi
     ports:
-      - "8000:8000"
+      - "8000"
     volumes:
       - .:/cardealer
     depends_on:
@@ -56,6 +56,13 @@ services:
     depends_on:
       - db
       - redis
+      - web
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "1337:80"
+    depends_on:
       - web
 
 
