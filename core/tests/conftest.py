@@ -1,5 +1,5 @@
 import pytest
-from core.models import CarShowroomDiscount, User
+from core.models import User
 from core.tests.factories.discount_factories import (
     CarShowroomDiscountFactory,
     ProviderDiscountFactory,
